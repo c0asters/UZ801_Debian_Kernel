@@ -51,7 +51,7 @@ jobs:
       - name: Download Kernel
         run: |
           cd $GITHUB_WORKSPACE/kernel_workflow
-          git clone --recursive ${{ env.OPENWRT_SOURCE }} -b ${{ env.OPENWRT_BRANCH }} debian_kernel --depth=1
+          git clone --recursive ${{ env.KERNEL_SOURCE }} -b ${{ env.KERNEL_BRANCH }} debian_kernel --depth=1
           wget ${{ env.CONFIG_FILE_SOURCE }} -O debian_kernel/.config
 
       - name: Build Kernel
