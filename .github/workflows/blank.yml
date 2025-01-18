@@ -1,0 +1,90 @@
+name: Build UZ801 Debian Kernel
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build kernel by ${{ github.actor }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Configuration
+        run: |
+          CONFIG_ENV=$(grep -w "CONFIG_ENV" config.env | head -n 1 | cut -d "=" -f 2)
+          CONFIG_LIST=(
+              KERNEL_SOURCE
+              KERNEL_BRANCH
+              CONFIG_FILE_SOURCE
+              REMOVE_UNUSED_PACKAGES
+          )
+          
+          for CONFIG in "${CONFIG_LIST[@]}"; do
+              echo "$CONFIG=$(grep -w "$CONFIG" "$CONFIG_ENV" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
+          done
+
+      - name: Remove unused packages
+        if: env.REMOVE_UNUSED_PACKAGES == 'true'
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: ture
+          android: false
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
+
+      - name: Setup build kernel environment
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python2 python3
+          sudo apt-get install libssl-dev:arm64 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          mkdir -p $GITHUB_WORKSPACE/openwrt_folder
+
+      - name: Set swap to 10G
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 10
+
+      - name: Download Kernel
+        run: |
+          cd $GITHUB_WORKSPACE/kernel_workflow
+          git clone --recursive ${{ env.OPENWRT_SOURCE }} -b ${{ env.OPENWRT_BRANCH }} debian_kernel --depth=1
+          wget ${{ env.CONFIG_FILE_SOURCE }} -O debian_kernel/.config
+
+      - name: Build Kernel
+        run: |
+          cd $GITHUB_WORKSPACE/kernel_workflow/debian_kernel
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc --all)
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- deb-pkg -j$(nproc --all)
+
+      - name: Check compiled files
+        run: |
+           if [ -f $GITHUB_WORKSPACE/kernel_workflow/linux-headers-* ]; then
+              echo "BOOT_STATUS=true" >> $GITHUB_ENV
+           else
+              echo "boot file is empty"
+              exit 1
+           fi
+
+      - name: Upload boot headers
+        if: env.BOOT_STATUS == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: boot_header_deb
+          path: kernel_workflow/debian_kernel/linux-headers-*
+          
+      - name: Upload boot image
+        if: env.BOOT_STATUS == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: boot_image_deb
+          path: kernel_workflow/debian_kernel/linux-image-*
+          
+      - name: Upload libc
+        if: env.BOOT_STATUS == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: boot_libc_deb
+          path: kernel_workflow/debian_kernel/linux-libc-*
