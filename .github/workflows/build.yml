@@ -58,7 +58,6 @@ jobs:
           wget ${{ env.CONFIG_FILE_SOURCE }} -O debian_kernel/.config
 
       - name: Download mkbootimg tools
-        if: env.BUILD_BOOT_IMG == 'true'
         run: |
           cd $GITHUB_WORKSPACE/kernel_workflow
           git clone https://android.googlesource.com/platform/system/tools/mkbootimg tools -b master-kernel-build-2022 --depth=1
