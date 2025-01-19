@@ -64,7 +64,8 @@ jobs:
 
       - name: Check compiled files
         run: |
-           if [ -f $GITHUB_WORKSPACE/kernel_workflow/linux-headers-* ]; then
+           cd $GITHUB_WORKSPACE/kernel_workflow
+           if [ -f linux-headers-* ]; then
               echo "BOOT_STATUS=true" >> $GITHUB_ENV
               echo "HEADER=$(ls linux-headers-*)" >> GITHUB_ENV
               echo "IMAGE=$(ls linux-image-*)" >> GITHUB_ENV
