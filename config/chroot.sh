@@ -6,5 +6,5 @@ rm "/etc/locale.gen"
 dpkg-reconfigure --frontend noninteractive locales
 dpkg -i root/*.deb
 apt update
-apt install usbutils network-manager sudo fdisk vim nano openssh-server iputils-ping wget curl iproute2 dialog locales kmod zip unzip u-boot-tools initramfs-tools net-tools htop
+apt install usbutils network-manager sudo fdisk vim nano openssh-server iputils-ping wget curl iproute2 locales kmod zip unzip u-boot-tools initramfs-tools net-tools htop
 exit
