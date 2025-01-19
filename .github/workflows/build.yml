@@ -36,6 +36,7 @@ jobs:
 
       - name: Setup build kernel environment
         run: |
+          echo "TIMEDATE=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
           sudo dpkg --add-architecture arm64
           sudo wget https://raw.githubusercontent.com/JackA1ltman/UZ801_Debian_Kernel/refs/heads/main/config/sources.list -O /etc/apt/sources.list
           sudo apt-get update
@@ -61,10 +62,17 @@ jobs:
           cd $GITHUB_WORKSPACE/kernel_workflow
           git clone https://android.googlesource.com/platform/system/tools/mkbootimg tools -b master-kernel-build-2022 --depth=1
 
+      - name: Setup ccache
+        if: env.ENABLE_CCACHE == 'true'
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: build-kernel-${{ env.TIMEDATE }}
+          max-size: 2G
+
       - name: Build Kernel
         run: |
           cd $GITHUB_WORKSPACE/kernel_workflow/debian_kernel
-          yes y | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc --all)
+          yes y | make CC="ccache aarch64-linux-gnu-gcc" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc --all)
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- deb-pkg -j$(nproc --all)
           cat arch/arm64/boot/Image.gz arch/arm64/boot/dts/qcom/msm8916-yiming-uz801v3.dtb > kernel-dtb
 
@@ -72,6 +80,7 @@ jobs:
         run: |
            cd $GITHUB_WORKSPACE/kernel_workflow
            if [ -f linux-headers-* ]; then
+              ls -al
               echo "BOOT_STATUS=true" >> $GITHUB_ENV
               echo "HEADER=$(ls linux-headers-*.deb)" >> $GITHUB_ENV
               echo "IMAGE=$(ls linux-image-*.deb)" >> $GITHUB_ENV
