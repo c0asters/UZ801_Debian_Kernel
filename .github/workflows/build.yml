@@ -41,6 +41,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python2 python3
           sudo apt-get install libssl-dev:arm64 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu debhelper-compat libelf-dev:native
+          sudo apt-get install android-libbase android-liblog android-libsparse android-sdk-libsparse-utils img2simg
           mkdir -p $GITHUB_WORKSPACE/kernel_workflow
 
       - name: Set swap to 10G
@@ -54,11 +55,18 @@ jobs:
           git clone --recursive ${{ env.KERNEL_SOURCE }} -b ${{ env.KERNEL_BRANCH }} debian_kernel --depth=1
           wget ${{ env.CONFIG_FILE_SOURCE }} -O debian_kernel/.config
 
+      - name: Download mkbootimg tools
+        if: env.BUILD_BOOT_IMG == 'true'
+        run: |
+          cd $GITHUB_WORKSPACE/kernel_workflow
+          git clone https://android.googlesource.com/platform/system/tools/mkbootimg tools -b master-kernel-build-2022 --depth=1
+
       - name: Build Kernel
         run: |
           cd $GITHUB_WORKSPACE/kernel_workflow/debian_kernel
           yes y | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc --all)
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- deb-pkg -j$(nproc --all)
+          cat arch/arm64/boot/Image.gz arch/arm64/boot/dts/qcom/msm8916-yiming-uz801v3.dtb > kernel-dtb
 
       - name: Check compiled files
         run: |
@@ -78,15 +86,44 @@ jobs:
            cd $GITHUB_WORKSPACE/kernel_workflow
            sudo apt-get install debootstrap qemu-user-static binfmt-support
            sudo debootstrap --arch arm64 --foreign jammy rootfs https://ports.ubuntu.com
+           
            sudo cp -a /usr/bin/qemu-aarch64-static rootfs/usr/bin/qemu-aarch64-static
-           sudo cp $HEADER rootfs/root/
-           sudo cp $IMAGE rootfs/root/
-           sudo cp $LLBIC rootfs/root/
+           sudo cp ${{ env.HEADER }} rootfs/root/
+           sudo cp ${{ env.IMAGE }} rootfs/root/
+           sudo cp ${{ env.LLBIC }} rootfs/root/
            sudo wget https://raw.githubusercontent.com/JackA1ltman/UZ801_Debian_Kernel/refs/heads/main/config/chroot.sh -O rootfs/chroot.sh
+           
            sudo mount --bind /dev rootfs/dev
            sudo mount --bind /dev/pts rootfs/dev/pts
            sudo mount --bind /proc rootfs/proc
            sudo chroot rootfs bash -c "bash chroot.sh"
+
+           sudo umount rootfs/dev/pts
+           sudo umount rootfs/dev 
+           sudo umount rootfs/proc
+           dd if=/dev/zero of=rootfs.ext4 bs=1M count=4096
+           mkfs.ext4 rootfs.ext4
+           mkdir /mnt/rootfs_dd
+           mount rootfs.ext4 /mnt/rootfs_dd
+           cp -a rootfs/. /mnt/rootfs_dd/
+           sync
+           umount /mnt/rootfs_dd/
+           img2simg rootfs.ext4 rootfs.img
+           
+           echo "ROOTFS_UUID=$(file rootfs.ext4 | sed -n 's/.*UUID=\([^ ]*\).*/\1/p')" >> >> $GITHUB_ENV
+
+      - name: Mkbootimg
+        run: |
+          cd $GITHUB_WORKSPACE/kernel_workflow/tools
+          mkbootimg --base 0x80000000 \
+                    --kernel_offset 0x00080000 \
+                    --ramdisk_offset 0x02000000 \
+                    --tags_offset 0x01e00000 \
+                    --pagesize 2048 \
+                    --second_offset 0x00f00000 \
+                    --ramdisk initrd.img \
+                    --cmdline "earlycon console=tty0 console=ttyMSM0,115200 root=UUID=${{ env.ROOTFS_UUID }} rw loglevel=7"\
+                    --kernel ../debian_kernel/kernel-dtb -o ../boot.img
 
       - name: Upload boot headers
         if: env.BOOT_STATUS == 'true'
@@ -108,3 +145,17 @@ jobs:
         with:
           name: boot_libc.deb
           path: kernel_workflow/${{ env.LLIBC }}
+
+      - name: Upload rootfs image
+        if: env.BOOT_STATUS == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: boot.img
+          path: kernel_workflow/boot.img
+
+      - name: Upload rootfs image
+        if: env.BOOT_STATUS == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rootfs.img
+          path: kernel_workflow/rootfs.img
