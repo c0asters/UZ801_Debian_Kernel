@@ -73,6 +73,21 @@ jobs:
               exit 1
            fi
 
+      - name: Chroot
+        run: |
+           cd $GITHUB_WORKSPACE/kernel_workflow
+           sudo apt-get install debootstrap qemu-user-static binfmt-support
+           sudo debootstrap --arch arm64 --foreign jammy rootfs https://ports.ubuntu.com
+           sudo cp -a /usr/bin/qemu-aarch64-static rootfs/usr/bin/qemu-aarch64-static
+           sudo cp $HEADER rootfs/root/
+           sudo cp $IMAGE rootfs/root/
+           sudo cp $LLBIC rootfs/root/
+           sudo wget https://raw.githubusercontent.com/JackA1ltman/UZ801_Debian_Kernel/refs/heads/main/config/chroot.sh -O rootfs/chroot.sh
+           sudo mount --bind /dev rootfs/dev
+           sudo mount --bind /dev/pts rootfs/dev/pts
+           sudo mount --bind /proc rootfs/proc
+           sudo chroot rootfs bash -c "bash chroot.sh"
+
       - name: Upload boot headers
         if: env.BOOT_STATUS == 'true'
         uses: actions/upload-artifact@v4
