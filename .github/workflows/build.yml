@@ -61,10 +61,6 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/kernel_workflow
           git clone https://android.googlesource.com/platform/system/tools/mkbootimg tools -b master-kernel-build-2022 --depth=1
-          ls -al
-          echo "====="
-          ls -al tools/
-          exit 1
 
       - name: Setup ccache
         if: env.ENABLE_CCACHE == 'true'
@@ -128,6 +124,7 @@ jobs:
       - name: Mkbootimg
         run: |
           cd $GITHUB_WORKSPACE/kernel_workflow/tools
+          ls -al
           ./mkbootimg.py --base 0x80000000 \
                     --kernel_offset 0x00080000 \
                     --ramdisk_offset 0x02000000 \
