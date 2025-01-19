@@ -111,14 +111,14 @@ jobs:
            sudo umount rootfs/dev/pts
            sudo umount rootfs/dev 
            sudo umount rootfs/proc
-           dd if=/dev/zero of=rootfs.ext4 bs=1M count=4096
-           mkfs.ext4 rootfs.ext4
+           dd if=/dev/zero of=rootfs-ori.img bs=1M count=4096
+           mkfs.ext4 rootfs-ori.img
            sudo mkdir /mnt/rootfs_dd
-           sudo mount rootfs.ext4 /mnt/rootfs_dd
+           sudo mount rootfs-ori.img /mnt/rootfs_dd
            sudo cp -a rootfs/. /mnt/rootfs_dd/
-           sync
+           sudo sync
            sudo umount /mnt/rootfs_dd/
-           img2simg rootfs.ext4 rootfs.img
+           img2simg rootfs-ori.img rootfs.img
            
            echo "ROOTFS_UUID=$(file rootfs.ext4 | sed -n 's/.*UUID=\([^ ]*\).*/\1/p')" >> >> $GITHUB_ENV
 
