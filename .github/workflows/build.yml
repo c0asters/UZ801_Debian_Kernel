@@ -16,6 +16,7 @@ jobs:
               KERNEL_BRANCH
               CONFIG_FILE_SOURCE
               REMOVE_UNUSED_PACKAGES
+              ENABLE_CCACHE
           )
           
           for CONFIG in "${CONFIG_LIST[@]}"; do
