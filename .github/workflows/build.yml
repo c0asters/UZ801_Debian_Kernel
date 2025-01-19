@@ -59,6 +59,8 @@ jobs:
           cd $GITHUB_WORKSPACE/kernel_workflow/debian_kernel
           yes y | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc --all)
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- deb-pkg -j$(nproc --all)
+          ls
+          ls ../
 
       - name: Check compiled files
         run: |
