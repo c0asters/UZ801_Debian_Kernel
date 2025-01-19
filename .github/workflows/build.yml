@@ -120,7 +120,7 @@ jobs:
            sudo umount /mnt/rootfs_dd/
            img2simg rootfs-ori.img rootfs.img
            
-           echo "ROOTFS_UUID=$(file rootfs.ext4 | sed -n 's/.*UUID=\([^ ]*\).*/\1/p')" >> >> $GITHUB_ENV
+           echo "ROOTFS_UUID=$(file rootfs.img | sed -n 's/.*UUID=\([^ ]*\).*/\1/p')" >> $GITHUB_ENV
 
       - name: Mkbootimg
         run: |
