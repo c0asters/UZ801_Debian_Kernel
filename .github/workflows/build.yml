@@ -100,7 +100,7 @@ jobs:
            sudo cp -a /usr/bin/qemu-aarch64-static rootfs/usr/bin/qemu-aarch64-static
            sudo cp ${{ env.HEADER }} rootfs/root/
            sudo cp ${{ env.IMAGE }} rootfs/root/
-           sudo cp ${{ env.LLBIC }} rootfs/root/
+           sudo cp ${{ env.LLIBC }} rootfs/root/
            sudo wget https://raw.githubusercontent.com/JackA1ltman/UZ801_Debian_Kernel/refs/heads/main/config/chroot.sh -O rootfs/chroot.sh
            
            sudo mount --bind /dev rootfs/dev
