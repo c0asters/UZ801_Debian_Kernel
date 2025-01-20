@@ -159,7 +159,7 @@ jobs:
           name: boot_libc.deb
           path: kernel_workflow/${{ env.LLIBC }}
 
-      - name: Upload rootfs image
+      - name: Upload boot image
         if: env.BOOT_STATUS == 'true'
         uses: actions/upload-artifact@v4
         with:
