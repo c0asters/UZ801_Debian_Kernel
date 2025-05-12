@@ -172,3 +172,11 @@ jobs:
         with:
           name: rootfs.img
           path: kernel_workflow/rootfs.img
+
+      - name: Upload dtb 
+        if: env.BOOT_STATUS == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-dtb
+          path: kernel_workflow/debian_kernel/kernel-dtb
+
