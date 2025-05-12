@@ -39,7 +39,7 @@ jobs:
         run: |
           echo "TIMEDATE=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
           sudo dpkg --add-architecture arm64
-          sudo wget https://raw.githubusercontent.com/JackA1ltman/UZ801_Debian_Kernel/refs/heads/main/config/sources.list -O /etc/apt/sources.list
+          sudo wget https://raw.githubusercontent.com/c0asters/UZ801_Debian_Kernel/refs/heads/main/config/sources.list -O /etc/apt/sources.list
           sudo apt-get update
           sudo apt-get install git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python2 python3
           sudo apt-get install libssl-dev:arm64 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu debhelper-compat libelf-dev:native
@@ -51,7 +51,7 @@ jobs:
         with:
           swap-size-gb: 10
 
-      - name: Download Kernel
+      - name: Download Kernel And Mod 
         run: |
           cd $GITHUB_WORKSPACE/kernel_workflow
           git clone --recursive ${{ env.KERNEL_SOURCE }} -b ${{ env.KERNEL_BRANCH }} debian_kernel --depth=1
@@ -103,7 +103,7 @@ jobs:
            sudo cp ${{ env.HEADER }} rootfs/root/
            sudo cp ${{ env.IMAGE }} rootfs/root/
            sudo cp ${{ env.LLIBC }} rootfs/root/
-           sudo wget https://raw.githubusercontent.com/JackA1ltman/UZ801_Debian_Kernel/refs/heads/main/config/chroot.sh -O rootfs/chroot.sh
+           sudo wget https://raw.githubusercontent.com/c0asters/UZ801_Debian_Kernel/refs/heads/main/config/chroot.sh -O rootfs/chroot.sh
            
            sudo mount --bind /dev rootfs/dev
            sudo mount --bind /dev/pts rootfs/dev/pts
