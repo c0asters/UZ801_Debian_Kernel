@@ -95,51 +95,6 @@ jobs:
               exit 1
            fi
 
-      - name: Chroot
-        run: |
-           cd $GITHUB_WORKSPACE/kernel_workflow
-           sudo apt-get install debootstrap qemu-user-static binfmt-support
-           sudo debootstrap --arch arm64 --foreign jammy rootfs https://ports.ubuntu.com
-           
-           sudo cp -a /usr/bin/qemu-aarch64-static rootfs/usr/bin/qemu-aarch64-static
-           sudo cp ${{ env.HEADER }} rootfs/root/
-           sudo cp ${{ env.IMAGE }} rootfs/root/
-           sudo cp ${{ env.LLIBC }} rootfs/root/
-           sudo wget https://raw.githubusercontent.com/c0asters/UZ801_Debian_Kernel/refs/heads/main/config/chroot.sh -O rootfs/chroot.sh
-           
-           sudo mount --bind /dev rootfs/dev
-           sudo mount --bind /dev/pts rootfs/dev/pts
-           sudo mount --bind /proc rootfs/proc
-           sudo chroot rootfs bash -c "bash chroot.sh"
-
-           # sudo umount rootfs/dev/pts
-           sudo umount rootfs/dev 
-           # sudo umount rootfs/proc
-           dd if=/dev/zero of=rootfs-ori.img bs=1M count=2400
-           mkfs.ext4 rootfs-ori.img
-           sudo mkdir /mnt/rootfs_dd
-           sudo mount rootfs-ori.img /mnt/rootfs_dd
-           sudo cp -a rootfs/. /mnt/rootfs_dd/
-           sudo sync
-           sudo umount /mnt/rootfs_dd/
-           img2simg rootfs-ori.img rootfs.img
-           
-           echo "ROOTFS_UUID=$(file rootfs.img | sed -n 's/.*UUID=\([^ ]*\).*/\1/p')" >> $GITHUB_ENV
-
-      - name: Mkbootimg
-        run: |
-          cd $GITHUB_WORKSPACE/kernel_workflow/tools
-          ls -al
-          ./mkbootimg.py --base 0x80000000 \
-                    --kernel_offset 0x00080000 \
-                    --ramdisk_offset 0x02000000 \
-                    --tags_offset 0x01e00000 \
-                    --pagesize 2048 \
-                    --second_offset 0x00f00000 \
-                    --ramdisk ../debian_kernel/initrd.img \
-                    --cmdline "earlycon console=tty0 console=ttyMSM0,115200 root=UUID=${{ env.ROOTFS_UUID }} rw loglevel=7"\
-                    --kernel ../debian_kernel/kernel-dtb -o ../boot.img
-
       - name: Upload boot headers
         if: env.BOOT_STATUS == 'true'
         uses: actions/upload-artifact@v4
@@ -161,19 +116,6 @@ jobs:
           name: boot_libc.deb
           path: kernel_workflow/${{ env.LLIBC }}
 
-      - name: Upload boot image
-        if: env.BOOT_STATUS == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: boot.img
-          path: kernel_workflow/boot.img
-
-      - name: Upload rootfs image
-        if: env.BOOT_STATUS == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: rootfs.img
-          path: kernel_workflow/rootfs.img
 
       - name: Upload dtb 
         if: env.BOOT_STATUS == 'true'
