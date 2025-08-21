@@ -55,7 +55,6 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/kernel_workflow
           git clone --recursive ${{ env.KERNEL_SOURCE }} -b ${{ env.KERNEL_BRANCH }} debian_kernel --depth=1
-          wget ${{ env.CONFIG_FILE_SOURCE }} -O debian_kernel/.config
 
       - name: Download mkbootimg tools
         run: |
