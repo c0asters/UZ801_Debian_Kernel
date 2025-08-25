@@ -55,6 +55,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/kernel_workflow
           git clone --recursive ${{ env.KERNEL_SOURCE }} -b ${{ env.KERNEL_BRANCH }} debian_kernel --depth=1
+          wget ${{ env.CONFIG_FILE_SOURCE }} -O debian_kernel/.config
 
       - name: Download mkbootimg tools
         run: |
@@ -71,9 +72,6 @@ jobs:
       - name: Build Kernel
         run: |
           cd $GITHUB_WORKSPACE/kernel_workflow/debian_kernel
-          export CROSS_COMPILE=aarch64-linux-gnu-
-          export ARCH=arm64
-          make ufi003_defconfig
           yes y | make CC="ccache aarch64-linux-gnu-gcc" CXX="ccache aarch64-linux-gnu-g++" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc --all)
           make  CC="ccache aarch64-linux-gnu-gcc" CXX="ccache aarch64-linux-gnu-g++" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- deb-pkg -j$(nproc --all)
           cat arch/arm64/boot/Image.gz arch/arm64/boot/dts/qcom/msm8916-thwc-ufi003-no-modem-oc.dtb > kernel-dtb 
