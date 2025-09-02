@@ -72,7 +72,6 @@ jobs:
       - name: Build Kernel
         run: |
           cd $GITHUB_WORKSPACE/kernel_workflow/debian_kernel
-          yes y | make CC="ccache aarch64-linux-gnu-gcc" CXX="ccache aarch64-linux-gnu-g++" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc --all)
           yes 1 | make CC="ccache aarch64-linux-gnu-gcc" CXX="ccache aarch64-linux-gnu-g++" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc --all)
           make  CC="ccache aarch64-linux-gnu-gcc" CXX="ccache aarch64-linux-gnu-g++" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- deb-pkg -j$(nproc --all)
           cat arch/arm64/boot/Image.gz arch/arm64/boot/dts/qcom/msm8916-thwc-ufi003-no-modem-oc.dtb > kernel-dtb 
