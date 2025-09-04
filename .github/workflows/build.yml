@@ -75,6 +75,7 @@ jobs:
           yes y | make CC="ccache aarch64-linux-gnu-gcc" CXX="ccache aarch64-linux-gnu-g++" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc --all)
           make  CC="ccache aarch64-linux-gnu-gcc" CXX="ccache aarch64-linux-gnu-g++" ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- deb-pkg -j$(nproc --all)
           cat arch/arm64/boot/Image.gz arch/arm64/boot/dts/qcom/msm8916-thwc-ufi003-no-modem-oc.dtb > kernel-dtb 
+          cat arch/arm64/boot/Image.gz arch/arm64/boot/dts/qcom/msm8916-yiming-uz801v3.dtb > kernel-uz801-dtb 
           sudo make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_install -j$(nproc --all)
           MKINIT_FOLDER=$(ls -d /lib/modules/*-msm8916-* | xargs -n 1 basename)
           sudo mkinitramfs $MKINIT_FOLDER -o ./initrd.img
@@ -121,4 +122,11 @@ jobs:
         with:
           name: kernel-dtb
           path: kernel_workflow/debian_kernel/kernel-dtb
+
+      - name: Upload uz801 dtb 
+        if: env.BOOT_STATUS == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-uz801-dtb
+          path: kernel_workflow/debian_kernel/kernel-uz801-dtb
 
